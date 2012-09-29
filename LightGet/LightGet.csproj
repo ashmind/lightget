@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LightGet</RootNamespace>
-    <AssemblyName>LightGet</AssemblyName>
+    <AssemblyName>lightget</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -47,6 +47,7 @@
     <Compile Include="Arguments.cs" />
     <Compile Include="ConsoleTools\CommandLineParser.cs" />
     <Compile Include="ConsoleTools\ConsoleApplication.cs" />
+    <Compile Include="ConsoleTools\ConsoleUI.cs" />
     <Compile Include="ConsoleTools\PositionalAttribute.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
