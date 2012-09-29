@@ -1,0 +1,7 @@
+
+*.user
+*.suo
+bin/
+obj/
+_ReSharper.*
+_NCrunch*
