@@ -71,6 +71,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Of.ConsoleTools\CommandLineParserTests.cs" />
+    <Compile Include="Of.ConsoleTools\TestClasses\ClassWithPositionalProperties.cs" />
     <Compile Include="Of.ConsoleTools\TestClasses\PrimitiveClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

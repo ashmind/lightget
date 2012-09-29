@@ -17,10 +17,16 @@ namespace LightGet.Tests.Of.ConsoleTools {
         }
 
         private void Primitive<T>(string arg, Func<PrimitiveClass, T> getValue, T expectedValue) {
-            var parser = new CommandLineParser();
-            var result = parser.Parse<PrimitiveClass>(new[] { arg });
-
+            var result = new CommandLineParser().Parse<PrimitiveClass>(new[] { arg });
             Assert.AreEqual(expectedValue, getValue(result));
+        }
+
+        [Test]
+        public void Positional() {
+            var result = new CommandLineParser().Parse<ClassWithPositionalProperties>(new[] { "First", "Second" });
+
+            Assert.AreEqual("First", result.First);
+            Assert.AreEqual("Second", result.Second);
         }
     }
 }

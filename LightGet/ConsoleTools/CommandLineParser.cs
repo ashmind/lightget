@@ -11,11 +11,11 @@ namespace LightGet.ConsoleTools {
     public class CommandLineParser {
         private class StructuredArguments {
             public IDictionary<string, string> Named { get; private set; }
-            public IList<string> Other { get; private set; }
+            public IList<string> Positional { get; private set; }
 
             public StructuredArguments() {
                 this.Named = new Dictionary<string, string>();
-                this.Other = new List<string>();
+                this.Positional = new List<string>();
             }
         }
 
@@ -37,6 +37,20 @@ namespace LightGet.ConsoleTools {
 
                 var value = ConvertValue(property, named.Value);
                 property.SetValue(result, value);
+            }
+
+            if (!arguments.Positional.Any())
+                return result;
+
+            var propertiesByPosition = (
+                from PropertyDescriptor property in properties
+                let attribute = (PositionalAttribute)property.Attributes[typeof(PositionalAttribute)]
+                where attribute != null
+                select new { position = attribute.Position, property }
+            ).ToDictionary(x => x.position, x => x.property);
+            for (var i = 0; i < arguments.Positional.Count; i++) {
+                var property = propertiesByPosition[i];
+                property.SetValue(result, ConvertValue(property, arguments.Positional[i]));
             }
 
             return result;
@@ -82,7 +96,7 @@ namespace LightGet.ConsoleTools {
                     currentName = null;
                 }
                 else {
-                    result.Other.Add(arg);
+                    result.Positional.Add(arg);
                 }
             }
 
