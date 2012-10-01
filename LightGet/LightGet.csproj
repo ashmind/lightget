@@ -49,6 +49,8 @@
     <Compile Include="ConsoleTools\ConsoleApplication.cs" />
     <Compile Include="ConsoleTools\ConsoleUI.cs" />
     <Compile Include="ConsoleTools\PositionalAttribute.cs" />
+    <Compile Include="Downloader.cs" />
+    <Compile Include="DownloadException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
