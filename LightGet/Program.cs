@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using LightGet.ConsoleTools;
 using LightGet.Logic;
+using Microsoft.WindowsAPICodePack.Taskbar;
 
 namespace LightGet {
     public class Program {
@@ -43,6 +44,9 @@ namespace LightGet {
                 Console.SetCursorPosition(0, Console.CursorTop);
                 Console.Write("{0:F1} %", percent);
                 lastPercent = percent;
+
+                SetTaskBarProgress(percent);
+                Console.Title = percent.ToString("F1") + "%";
             }
             
             var msRemaining = progress.BytesRemaining * (progress.TimeElapsed.TotalMilliseconds / progress.BytesDownloaded);
@@ -55,6 +59,13 @@ namespace LightGet {
             Console.SetCursorPosition("100.0 % ".Length, Console.CursorTop);
             Console.Write("Remaining: {0}.", formatted);
             lastTimeReported = formatted;
+        }
+
+        private static void SetTaskBarProgress(double percent) {
+            if (!TaskbarManager.IsPlatformSupported)
+                return;
+
+            TaskbarManager.Instance.SetProgressValue((int)percent, 100);
         }
 
         private static string FormatRemainingTime(TimeSpan timeRemaining) {
