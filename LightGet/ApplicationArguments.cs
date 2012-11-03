@@ -2,7 +2,7 @@ using System;
 using LightGet.ConsoleTools;
 
 namespace LightGet {
-    public class Arguments {
+    public class ApplicationArguments {
         public bool Recursive   { get; set; }
 
         public string User      { get; set; }
