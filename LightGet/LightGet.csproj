@@ -50,6 +50,9 @@
     <Reference Include="AshMind.Extensions">
       <HintPath>..\$packages\AshMind.Extensions.1.0.4\lib\3.5\AshMind.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\$packages\HtmlAgilityPack.1.4.6\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack">
       <HintPath>..\$libraries\WindowsAPICodePack\Microsoft.WindowsAPICodePack.dll</HintPath>
     </Reference>
@@ -72,9 +75,11 @@
     <Compile Include="ConsoleTools\PositionalAttribute.cs" />
     <Compile Include="Logic\DownloadException.cs" />
     <Compile Include="Logic\Downloader.cs" />
-    <Compile Include="Logic\DownloaderArguments.cs" />
+    <Compile Include="Logic\DownloaderOptions.cs" />
     <Compile Include="Logic\DownloaderProgress.cs" />
     <Compile Include="Logic\DownloaderResult.cs" />
+    <Compile Include="Logic\LinkExtractor.cs" />
+    <Compile Include="Logic\UrlToPathMapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

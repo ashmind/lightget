@@ -73,6 +73,8 @@
     <Compile Include="Of.ConsoleTools\CommandLineParserTests.cs" />
     <Compile Include="Of.ConsoleTools\TestClasses\ClassWithPositionalProperties.cs" />
     <Compile Include="Of.ConsoleTools\TestClasses\PrimitiveClass.cs" />
+    <Compile Include="Of.Logic\LinkExtractorTests.cs" />
+    <Compile Include="Of.Logic\UrlToPathMapperTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +83,7 @@
       <Name>LightGet</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
