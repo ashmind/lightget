@@ -36,7 +36,14 @@ namespace LightGet {
 
             while (queue.Count > 0) {
                 var url = queue.Dequeue();
-                var result = Download(downloader, url, credentials);
+                DownloaderResult result;
+                try {
+                    result = Download(downloader, url, credentials);
+                }
+                catch (Exception ex) {
+                    ConsoleUI.WriteLine(ConsoleColor.Red, ex.Message);
+                    continue;
+                }
 
                 visited.Add(url);
                 if (arguments.FollowLinks == LinkFollowingRule.None)
@@ -73,10 +80,10 @@ namespace LightGet {
             ConsoleUI.WriteLine(ConsoleColor.White, url);
             var result = downloader.Download(url, new DownloaderOptions {
                 Credentials = credentials,
-                ReportMessage = (format, args) => Console.WriteLine(format, args),
+                ReportMessage = (format, args) => Console.WriteLine(" " + format, args),
                 ReportError = (format, args) => {
                     SetTaskBarProgress(TaskbarProgressBarState.Error);
-                    ConsoleUI.WriteLine(ConsoleColor.Red, format, args);
+                    ConsoleUI.WriteLine(ConsoleColor.Red, " " + format, args);
                 },
                 ReportProgress = p => ReportDownloadProgress(p, ref lastPercent, ref lastTimeReported)
             });

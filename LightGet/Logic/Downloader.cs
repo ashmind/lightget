@@ -49,7 +49,7 @@ namespace LightGet.Logic {
             var file = this.mapPath(url, fileName);
             file.Directory.Create();
 
-            options.ReportMessage("File will be saved to {0}.", file.FullName);
+            options.ReportMessage("-> {0}.", file.FullName);
 
             var get = CreateRequest(url, options);
             get.Method = "GET";
@@ -61,13 +61,17 @@ namespace LightGet.Logic {
                     return new DownloaderResult(url, file, headResponse.ContentType);
                 }
 
-                if (fullLength > 0) {
+                if (file.Length < fullLength) {
                     options.ReportMessage("File already exists, requesting range {0}-{1}.", file.Length, headResponse.ContentLength);
                     get.AddRange(file.Length, fullLength);
                     lengthDownloadedBefore = file.Length;
                 }
+                else if (fullLength <= 0) {
+                    options.ReportMessage("File already exists, but server did not provide length, so it will be fully redownloaded.");
+                    fileMode = FileMode.OpenOrCreate;
+                }
                 else {
-                    options.ReportMessage("File already exists. Server did not provide length, so it will be fully redownloaded.");
+                    options.ReportMessage("File already exists, but is larger than file on server, so it will be fully redownloaded. ");
                     fileMode = FileMode.OpenOrCreate;
                 }
             }
