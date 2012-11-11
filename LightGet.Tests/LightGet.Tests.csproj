@@ -75,9 +75,6 @@
     <Compile Include="Of.ConsoleTools\TestClasses\PrimitiveClass.cs" />
     <Compile Include="Of.ConsoleTools\TestClasses\ClassWithEnum.cs" />
     <Compile Include="Of.Logic\LinkExtractorTests.cs" />
-    <Compile Include="Of.Logic\PathMappingRuleConverterTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Of.Logic\UrlToPathMapperTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -17,7 +17,7 @@ namespace LightGet.Logic {
 
         public UrlToPathMapper(PathMappingRule rule, Uri relativeTo = null) {
             this.rule = rule;
-            if (this.rule.IncludePath && !this.rule.IncludeParentPath && relativeTo == null)
+            if (this.rule == PathMappingRule.Relative && relativeTo == null)
                 throw new ArgumentNullException("relativeTo", "Relative url must be set if the mapping rule requires relative paths.");
 
             this.relativeTo = relativeTo;
@@ -28,15 +28,15 @@ namespace LightGet.Logic {
                 throw new ArgumentException("Url must be absolute.", "url");
 
             var result = new StringBuilder();
-            if (rule.IncludeHost)
+            if (rule == PathMappingRule.Full)
                 result.Append(url.Host);
 
-            if (!url.IsDefaultPort && rule.IncludePort)
+            if (!url.IsDefaultPort && rule == PathMappingRule.Full)
                 result.Append("_").Append(url.Port);
 
-            if (url.LocalPath != "/" && rule.IncludePath) {
+            if (url.LocalPath != "/") {
                 var path = url.LocalPath.Replace('/', Path.DirectorySeparatorChar);
-                if (!rule.IncludeParentPath) {
+                if (rule == PathMappingRule.Relative) {
                     var rootPath = this.relativeTo.LocalPath.Replace('/', Path.DirectorySeparatorChar);
                     path = path.RemoveStart(rootPath);
                 }
