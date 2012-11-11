@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using LightGet.ConsoleTools;
 using LightGet.Logic;
 using Microsoft.WindowsAPICodePack.Taskbar;
 
 namespace LightGet {
     public class Program {
-        #region ProgramSubLogger Class
+        #region GetConsoleWindow
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        #endregion
+
+        #region LoggerForDownloader Class
 
         private class LoggerForDownloader : ConsoleLogger {
             public override void LogError(string format, params object[] args) {
@@ -20,6 +28,9 @@ namespace LightGet {
 
         #endregion
 
+        private const string ConsoleIndent = "  ";
+        private static IntPtr consoleWindowHandle;
+
         public static void Main(string[] args) {
             new ConsoleApplication().Run(() => {
                 var arguments = new CommandLineParser().Parse<ApplicationArguments>(args);
@@ -28,12 +39,13 @@ namespace LightGet {
         }
 
         private static void Main(ApplicationArguments arguments) {
+            EnsureConsoleWindowHandle();
             if (arguments.IgnoreCertificateValidation)
                 ServicePointManager.ServerCertificateValidationCallback = (x1, x2, x3, x4) => true;
 
             Console.CursorVisible = false;
 
-            var loggerForDownloader = new LoggerForDownloader { Prefix = "  " };
+            var loggerForDownloader = new LoggerForDownloader { Prefix = ConsoleIndent };
 
             var mapper = new UrlToPathMapper(arguments.OutputPathFormat, arguments.Url);
             var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -92,7 +104,7 @@ namespace LightGet {
         }
 
         private static DownloaderResult Download(Downloader downloader, Uri url, ICredentials credentials) {
-            var lastPercent = 0.0;
+            var lastPercent = -1.0;
             var lastTimeReported = (string)null;
             
             var result = downloader.Download(url, new DownloaderOptions {
@@ -112,7 +124,7 @@ namespace LightGet {
 
             var percent = 100 * (double)(progress.BytesDownloadedBefore + progress.BytesDownloaded) / progress.BytesTotal;
             if (Math.Abs(percent - lastPercent) >= 0.1) {
-                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.SetCursorPosition(ConsoleIndent.Length, Console.CursorTop);
                 Console.Write("{0:F1} %", percent);
                 lastPercent = percent;
 
@@ -128,23 +140,32 @@ namespace LightGet {
             if (formatted == lastTimeReported)
                 return;
 
-            Console.SetCursorPosition("100.0 % ".Length, Console.CursorTop);
+            Console.SetCursorPosition(ConsoleIndent.Length + "100.0 % ".Length, Console.CursorTop);
             Console.Write("Remaining: {0}.", formatted);
             lastTimeReported = formatted;
         }
 
-        private static void SetTaskBarProgress(double percent) {
+        private static void EnsureConsoleWindowHandle() {
             if (!TaskbarManager.IsPlatformSupported)
                 return;
 
-            TaskbarManager.Instance.SetProgressValue((int)percent, 100);
+            consoleWindowHandle = GetConsoleWindow();
+            if (consoleWindowHandle == IntPtr.Zero)
+                ConsoleUI.WriteLine(ConsoleColor.Yellow, "Unable to get console window handle, progress will not be reported in taskbar.");
+        }
+
+        private static void SetTaskBarProgress(double percent) {
+            if (!TaskbarManager.IsPlatformSupported || consoleWindowHandle == IntPtr.Zero)
+                return;
+
+            TaskbarManager.Instance.SetProgressValue((int)percent, 100, consoleWindowHandle);
         }
 
         private static void SetTaskBarProgress(TaskbarProgressBarState state) {
-            if (!TaskbarManager.IsPlatformSupported)
+            if (!TaskbarManager.IsPlatformSupported || consoleWindowHandle == IntPtr.Zero)
                 return;
 
-            TaskbarManager.Instance.SetProgressState(state);
+            TaskbarManager.Instance.SetProgressState(state, consoleWindowHandle);
         }
 
         private static string FormatRemainingTime(TimeSpan timeRemaining) {

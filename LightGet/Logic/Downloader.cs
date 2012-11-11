@@ -69,11 +69,11 @@ namespace LightGet.Logic {
                 }
                 else if (fullLength <= 0) {
                     this.logger.LogWarning("File already exists, but server did not provide length, so it will be fully redownloaded.");
-                    fileMode = FileMode.OpenOrCreate;
+                    fileMode = FileMode.Create;
                 }
                 else {
                     this.logger.LogWarning("File already exists, but is larger than file on server, so it will be fully redownloaded. ");
-                    fileMode = FileMode.OpenOrCreate;
+                    fileMode = FileMode.Create;
                 }
             }
 
