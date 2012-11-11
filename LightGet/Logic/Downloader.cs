@@ -9,9 +9,11 @@ using AshMind.Extensions;
 
 namespace LightGet.Logic {
     public class Downloader {
+        private readonly ILogger logger;
         private readonly Func<Uri, string, FileInfo> mapPath;
 
-        public Downloader(Func<Uri, string, FileInfo> mapPath) {
+        public Downloader(ILogger logger, Func<Uri, string, FileInfo> mapPath) {
+            this.logger = logger;
             this.mapPath = mapPath;
         }
 
@@ -29,16 +31,15 @@ namespace LightGet.Logic {
                 return Download(new Uri(target), options);
             }
 
-            if (headResponse.StatusCode != HttpStatusCode.OK) {
+            if (headResponse.StatusCode != HttpStatusCode.OK)
                 throw new NotSupportedException(string.Format("HEAD request returned a response code {0}: {1} that is currently not supported.", headResponse.StatusCode, headResponse.StatusDescription));
-            }
 
             while (true) {
                 try {
                     return Download(url, headResponse, options);
                 }
                 catch (DownloadException ex) {
-                    options.ReportError("Download error {0}, retrying.", ex.Message);
+                    this.logger.LogError("Download error {0}, retrying.", ex.Message);
                 }
             }
         }
@@ -49,7 +50,7 @@ namespace LightGet.Logic {
             var file = this.mapPath(url, fileName);
             file.Directory.Create();
 
-            options.ReportMessage("-> {0}.", file.FullName);
+            logger.LogMessage("-> {0}.", file.FullName);
 
             var get = CreateRequest(url, options);
             get.Method = "GET";
@@ -57,21 +58,21 @@ namespace LightGet.Logic {
             var fileMode = FileMode.Append;
             if (file.Exists && file.Length > 0) {
                 if (file.Length == fullLength) {
-                    options.ReportMessage("File is already fully downloaded.");
+                    this.logger.LogMessage("File is already fully downloaded.");
                     return new DownloaderResult(url, file, headResponse.ContentType);
                 }
 
                 if (file.Length < fullLength) {
-                    options.ReportMessage("File already exists, requesting range {0}-{1}.", file.Length, headResponse.ContentLength);
+                    this.logger.LogMessage("File already exists, requesting range {0}-{1}.", file.Length, headResponse.ContentLength);
                     get.AddRange(file.Length, fullLength);
                     lengthDownloadedBefore = file.Length;
                 }
                 else if (fullLength <= 0) {
-                    options.ReportMessage("File already exists, but server did not provide length, so it will be fully redownloaded.");
+                    this.logger.LogWarning("File already exists, but server did not provide length, so it will be fully redownloaded.");
                     fileMode = FileMode.OpenOrCreate;
                 }
                 else {
-                    options.ReportMessage("File already exists, but is larger than file on server, so it will be fully redownloaded. ");
+                    this.logger.LogWarning("File already exists, but is larger than file on server, so it will be fully redownloaded. ");
                     fileMode = FileMode.OpenOrCreate;
                 }
             }
@@ -108,7 +109,7 @@ namespace LightGet.Logic {
                 }
             }
 
-            options.ReportMessage("Download completed.");
+            this.logger.LogMessage("Download completed.");
             var contentType = new ContentType(headResponse.ContentType);
             return new DownloaderResult(url, file, contentType.MediaType);
         }

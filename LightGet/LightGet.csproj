@@ -73,11 +73,13 @@
     <Compile Include="ConsoleTools\ConsoleApplication.cs" />
     <Compile Include="ConsoleTools\ConsoleUI.cs" />
     <Compile Include="ConsoleTools\PositionalAttribute.cs" />
+    <Compile Include="Logic\ConsoleLogger.cs" />
     <Compile Include="Logic\DownloadException.cs" />
     <Compile Include="Logic\Downloader.cs" />
     <Compile Include="Logic\DownloaderOptions.cs" />
     <Compile Include="Logic\DownloaderProgress.cs" />
     <Compile Include="Logic\DownloaderResult.cs" />
+    <Compile Include="Logic\ILogger.cs" />
     <Compile Include="Logic\LinkExtractor.cs" />
     <Compile Include="Logic\LinkFollowingRule.cs" />
     <Compile Include="Logic\PathMappingRule.cs" />

@@ -9,6 +9,17 @@ using Microsoft.WindowsAPICodePack.Taskbar;
 
 namespace LightGet {
     public class Program {
+        #region ProgramSubLogger Class
+
+        private class LoggerForDownloader : ConsoleLogger {
+            public override void LogError(string format, params object[] args) {
+                SetTaskBarProgress(TaskbarProgressBarState.Error);
+                base.LogError(format, args);
+            }
+        }
+
+        #endregion
+
         public static void Main(string[] args) {
             new ConsoleApplication().Run(() => {
                 var arguments = new CommandLineParser().Parse<ApplicationArguments>(args);
@@ -22,10 +33,12 @@ namespace LightGet {
 
             Console.CursorVisible = false;
 
+            var loggerForDownloader = new LoggerForDownloader { Prefix = "  " };
+
             var mapper = new UrlToPathMapper(arguments.OutputPathFormat, arguments.Url);
             var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
 
-            var downloader = new Downloader((url, fileName) => new FileInfo(Path.Combine(directory.FullName, mapper.GetPath(url, fileName))));
+            var downloader = new Downloader(loggerForDownloader, (url, fileName) => new FileInfo(Path.Combine(directory.FullName, mapper.GetPath(url, fileName))));
             var extractor = new LinkExtractor();
 
             var credentials = arguments.User != null ? new NetworkCredential(arguments.User, arguments.Password) : null;
@@ -36,6 +49,8 @@ namespace LightGet {
 
             while (queue.Count > 0) {
                 var url = queue.Dequeue();
+                ConsoleUI.WriteLine(ConsoleColor.White, url);
+
                 DownloaderResult result;
                 try {
                     result = Download(downloader, url, credentials);
@@ -43,6 +58,9 @@ namespace LightGet {
                 catch (Exception ex) {
                     ConsoleUI.WriteLine(ConsoleColor.Red, ex.Message);
                     continue;
+                }
+                finally {
+                    Console.WriteLine();
                 }
 
                 visited.Add(url);
@@ -76,15 +94,9 @@ namespace LightGet {
         private static DownloaderResult Download(Downloader downloader, Uri url, ICredentials credentials) {
             var lastPercent = 0.0;
             var lastTimeReported = (string)null;
-
-            ConsoleUI.WriteLine(ConsoleColor.White, url);
+            
             var result = downloader.Download(url, new DownloaderOptions {
                 Credentials = credentials,
-                ReportMessage = (format, args) => Console.WriteLine(" " + format, args),
-                ReportError = (format, args) => {
-                    SetTaskBarProgress(TaskbarProgressBarState.Error);
-                    ConsoleUI.WriteLine(ConsoleColor.Red, " " + format, args);
-                },
                 ReportProgress = p => ReportDownloadProgress(p, ref lastPercent, ref lastTimeReported)
             });
             SetTaskBarProgress(TaskbarProgressBarState.NoProgress);
