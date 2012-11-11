@@ -28,7 +28,7 @@ namespace LightGet.ConsoleTools {
                 if (named.Key.Length == 1)
                     throw new NotImplementedException();
 
-                var propertyName = ToPropertyName(named.Key);
+                var propertyName = this.Normalize(named.Key);
                 var property = properties[propertyName];
                 if (property == null)
                     throw new FormatException(string.Format("Property {0} was not found on {1}.", propertyName, typeof(T)));
@@ -54,15 +54,18 @@ namespace LightGet.ConsoleTools {
             return result;
         }
 
-        private static object ConvertValue(PropertyDescriptor property, string valueString) {
+        private object ConvertValue(PropertyDescriptor property, string valueString) {
             if (valueString == null && property.PropertyType == typeof(bool))
                 return true;
-            
+
+            if (property.PropertyType.IsEnum)
+                valueString = Normalize(valueString);
+
             return property.Converter.ConvertFromInvariantString(valueString);
         }
 
-        private string ToPropertyName(string parameterName) {
-            return Regex.Replace(parameterName, "(?:^|-).", match => match.Value.Last().ToUpperInvariant().ToString());
+        private string Normalize(string name) {
+            return Regex.Replace(name, "(?:^|-).", match => match.Value.Last().ToUpperInvariant().ToString());
         }
 
         private StructuredArguments Analyze(IEnumerable<string> args) {

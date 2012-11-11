@@ -79,6 +79,11 @@
     <Compile Include="Logic\DownloaderProgress.cs" />
     <Compile Include="Logic\DownloaderResult.cs" />
     <Compile Include="Logic\LinkExtractor.cs" />
+    <Compile Include="Logic\LinkFollowingRule.cs" />
+    <Compile Include="Logic\PathMappingRule.cs" />
+    <Compile Include="Logic\PathMappingRuleConverter.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Logic\UrlToPathMapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -104,6 +109,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

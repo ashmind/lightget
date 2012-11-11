@@ -22,7 +22,7 @@ namespace LightGet {
 
             Console.CursorVisible = false;
 
-            var mapper = new UrlToPathMapper();
+            var mapper = new UrlToPathMapper(arguments.OutputPathFormat, arguments.Url);
             var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
 
             var downloader = new Downloader((url, fileName) => new FileInfo(Path.Combine(directory.FullName, mapper.GetPath(url, fileName))));
@@ -39,18 +39,31 @@ namespace LightGet {
                 var result = Download(downloader, url, credentials);
 
                 visited.Add(url);
-                if (!arguments.Recursive)
+                if (arguments.FollowLinks == LinkFollowingRule.None)
                     break;
 
                 using (var reader = result.File.OpenText()) {
                     var links = extractor.ExtractLinks(result.Url, reader, result.ContentType);
                     foreach (var link in links.Where(l => !visited.Contains(l))) {
+                        if (!ShouldFollow(link, arguments))
+                            continue;
+
                         queue.Enqueue(link);
                     }
                 }
             }
 
             Console.CursorVisible = true;
+        }
+
+        private static bool ShouldFollow(Uri link, ApplicationArguments arguments) {
+            if (arguments.FollowLinks == LinkFollowingRule.All)
+                return true;
+
+            if (arguments.FollowLinks == LinkFollowingRule.SamePath)
+                return link.ToString().Contains(arguments.Url.ToString());
+
+            throw new NotSupportedException(string.Format("FollowLinks rule {0} is not supported", arguments.FollowLinks));
         }
 
         private static DownloaderResult Download(Downloader downloader, Uri url, ICredentials credentials) {

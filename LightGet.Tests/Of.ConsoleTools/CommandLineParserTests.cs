@@ -28,5 +28,11 @@ namespace LightGet.Tests.Of.ConsoleTools {
             Assert.AreEqual("First", result.First);
             Assert.AreEqual("Second", result.Second);
         }
+
+        [Test]
+        public void Enums() {
+            var result = new CommandLineParser().Parse<ClassWithEnum>(new[] { "--enum-value=long-name-value" });
+            Assert.AreEqual(ClassWithEnum.SomeEnum.LongNameValue, result.EnumValue);
+        }
     }
 }
