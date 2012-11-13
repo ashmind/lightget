@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using LightGet.ConsoleTools;
 using LightGet.Logic;
 using Microsoft.WindowsAPICodePack.Taskbar;
@@ -28,6 +29,16 @@ namespace LightGet {
 
         #endregion
 
+        #region ProgressState Class
+
+        private class ProgresState {
+            public double LastPercent             { get; set; }
+            public string LastRemainingTimeString { get; set; }
+            public string LastBytesPerSecondString      { get; set; }
+        }
+
+        #endregion
+
         private const string ConsoleIndent = "  ";
         private static IntPtr consoleWindowHandle;
 
@@ -43,6 +54,7 @@ namespace LightGet {
             if (arguments.IgnoreCertificateValidation)
                 ServicePointManager.ServerCertificateValidationCallback = (x1, x2, x3, x4) => true;
 
+            Console.Title = "LightGet";
             Console.CursorVisible = false;
 
             var loggerForDownloader = new LoggerForDownloader { Prefix = ConsoleIndent };
@@ -104,45 +116,58 @@ namespace LightGet {
         }
 
         private static DownloaderResult Download(Downloader downloader, Uri url, ICredentials credentials) {
-            var lastPercent = -1.0;
-            var lastTimeReported = (string)null;
+            var progressState = new ProgresState {
+                LastPercent = -1.0,
+                LastRemainingTimeString = null,
+                LastBytesPerSecondString = null
+            };
             
             var result = downloader.Download(url, new DownloaderOptions {
                 Credentials = credentials,
-                ReportProgress = p => ReportDownloadProgress(p, ref lastPercent, ref lastTimeReported)
+                ReportProgress = p => ReportDownloadProgress(p, progressState)
             });
             SetTaskBarProgress(TaskbarProgressBarState.NoProgress);
 
             return result;
         }
 
-        private static void ReportDownloadProgress(DownloaderProgress progress, ref double lastPercent, ref string lastTimeReported) {
+        private static void ReportDownloadProgress(DownloaderProgress progress, ProgresState progressState) {
             if (progress.BytesTotal <= 0) { // length is unknown
                 SetTaskBarProgress(TaskbarProgressBarState.Indeterminate);
                 return;
             }
 
+            var indent = ConsoleIndent.Length;
             var percent = 100 * (double)(progress.BytesDownloadedBefore + progress.BytesDownloaded) / progress.BytesTotal;
-            if (Math.Abs(percent - lastPercent) >= 0.1) {
-                Console.SetCursorPosition(ConsoleIndent.Length, Console.CursorTop);
-                Console.Write("{0:F1} %", percent);
-                lastPercent = percent;
+            if (Math.Abs(percent - progressState.LastPercent) >= 0.1) {
+                Console.SetCursorPosition(indent, Console.CursorTop);
+                Console.Write("{0,4:F1}% |", percent);
+                progressState.LastPercent = percent;
 
                 SetTaskBarProgress(TaskbarProgressBarState.Normal);
                 SetTaskBarProgress(percent);
-                Console.Title = percent.ToString("F1") + "%";
             }
-            
+
+            indent += "99.9% | ".Length;
+            var bps = progress.BytesDownloaded/progress.TimeElapsed.TotalSeconds;
+            var bpsString = FormatBytesPerSecond(bps);
+            if (bpsString != progressState.LastBytesPerSecondString) {
+                Console.SetCursorPosition(indent, Console.CursorTop);
+                Console.Write(bpsString.PadRight("999 TB/s".Length));
+                Console.Write(" |");
+                progressState.LastBytesPerSecondString = bpsString;
+            }
+
+            indent += "999 TB/s | ".Length;
             var msRemaining = progress.BytesRemaining * (progress.TimeElapsed.TotalMilliseconds / progress.BytesDownloaded);
             var timeRemaining = TimeSpan.FromMilliseconds(msRemaining);
-            var formatted = FormatRemainingTime(timeRemaining);
-
-            if (formatted == lastTimeReported)
-                return;
-
-            Console.SetCursorPosition(ConsoleIndent.Length + "100.0 % ".Length, Console.CursorTop);
-            Console.Write("Remaining: {0}.", formatted);
-            lastTimeReported = formatted;
+            var timeRemainingString = FormatRemainingTime(timeRemaining);
+            if (timeRemainingString != progressState.LastRemainingTimeString) {
+                Console.SetCursorPosition(indent, Console.CursorTop);
+                Console.Write("Remaining: {0}.".PadRight(40), timeRemainingString);
+                progressState.LastRemainingTimeString = timeRemainingString;
+                Console.Title = string.Format("{0}: {1}", Regex.Replace(timeRemainingString, @"(\d)\s(\w)\w*", "$1$2"), progress.File.Name);
+            }
         }
 
         private static void EnsureConsoleWindowHandle() {
@@ -169,16 +194,36 @@ namespace LightGet {
         }
 
         private static string FormatRemainingTime(TimeSpan timeRemaining) {
+            Func<int, string> s = n => n > 1 ? "s" : "";
+
             if (timeRemaining.TotalDays >= 1)
-                return timeRemaining.Days + " days " + timeRemaining.Hours + " hours";
+                return string.Format("{0} day{1} {2} hour{3}", timeRemaining.Days, s(timeRemaining.Days), timeRemaining.Hours, s(timeRemaining.Hours));
 
             if (timeRemaining.TotalHours >= 1)
-                return timeRemaining.Hours + " hours " + timeRemaining.Minutes + " minutes";
+                return string.Format("{0} hour{1} {2} minute{3}", timeRemaining.Hours, s(timeRemaining.Hours), timeRemaining.Minutes, s(timeRemaining.Minutes));
 
             if (timeRemaining.TotalMinutes >= 1)
-                return timeRemaining.Minutes + " minutes";
+                return timeRemaining.Minutes + " minute" + s(timeRemaining.Minutes);
 
-            return timeRemaining.Seconds + " seconds";
+            return timeRemaining.Seconds + " second" + s(timeRemaining.Seconds);
+        }
+
+        private static readonly IList<Tuple<long, string>> ByteUnits = new List<Tuple<long, string>> {
+            Tuple.Create((long)Math.Pow(10, 12), "T"),
+            Tuple.Create((long)Math.Pow(10,  9), "G"),
+            Tuple.Create((long)Math.Pow(10,  6), "M"),
+            Tuple.Create(1000L, "K"),
+            Tuple.Create(1L,    "")
+        };
+        
+        private static string FormatBytesPerSecond(double bps) {
+            foreach (var unit in ByteUnits) {
+                var value = bps/unit.Item1;
+                if (value > 1)
+                    return string.Format("{0} {1}B/s", Math.Round(value, value > 10 ? 0 : 1), unit.Item2);
+            }
+
+            throw new Exception("This is never reached.");
         }
     }
 }

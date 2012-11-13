@@ -50,7 +50,7 @@ namespace LightGet.Logic {
             var file = this.mapPath(url, fileName);
             file.Directory.Create();
 
-            logger.LogMessage("-> {0}.", file.FullName);
+            logger.LogMessage("-> {0}", file.FullName);
 
             var get = CreateRequest(url, options);
             get.Method = "GET";
@@ -72,7 +72,7 @@ namespace LightGet.Logic {
                     fileMode = FileMode.Create;
                 }
                 else {
-                    this.logger.LogWarning("File already exists, but is larger than file on server, so it will be fully redownloaded. ");
+                    this.logger.LogWarning("File already exists, but it is larger than file on server, so it will be fully redownloaded. ");
                     fileMode = FileMode.Create;
                 }
             }
@@ -101,6 +101,8 @@ namespace LightGet.Logic {
                     fileStream.Write(buffer, 0, count);
 
                     options.ReportProgress(new DownloaderProgress {
+                        File = file,
+
                         BytesDownloadedBefore = lengthDownloadedBefore,
                         BytesDownloaded = downloadedTotal,
                         BytesTotal = fullLength,
